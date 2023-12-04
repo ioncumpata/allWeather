@@ -17,6 +17,6 @@ fun LocationWeatherDto.toLocation(): LocationWeather{
     return LocationWeather(
         name = name,
         country = country,
-        region = region
+        localtime = localtime
     )
 }

@@ -1,8 +1,10 @@
 package com.hfad.allweather.presentation.current_weather_screen
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.hfad.allweather.common.Resource
+import com.hfad.allweather.data.location.DefaultLocationTracker
 import com.hfad.allweather.domain.location.LocationTracker
 import com.hfad.allweather.domain.use_cases.GetCurrentWeatherUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -15,37 +17,54 @@ import javax.inject.Inject
 
 @HiltViewModel
 class CurrentWeatherViewModel @Inject constructor(
-    val getCurrentWeatherUseCase: GetCurrentWeatherUseCase,
-    private val locationTracker: LocationTracker
+    private val getCurrentWeatherUseCase: GetCurrentWeatherUseCase,
+    private val locationTracker: DefaultLocationTracker
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(CurrentWeatherListState())
     val state: StateFlow<CurrentWeatherListState> = _state
 
+    init {
+        getCurrentWeather()
+    }
 
-    fun getCurrentWeather(coordinates: String) = viewModelScope.launch(Dispatchers.IO) {
+
+    private fun getCurrentWeather() = viewModelScope.launch(Dispatchers.IO) {
 
         delay(500L)
+        val coordinates = locationTracker.getLocation().toString()
+        Log.d("Coordinates", coordinates)
 
-        getCurrentWeatherUseCase(coordinates).collect { result ->
-            when (result) {
-                is Resource.Success -> {
+       /* try {
 
-                    _state.value = CurrentWeatherListState(currentWeather = result.data)
 
-                }
-                is Resource.Error -> {
-                    _state.value =  CurrentWeatherListState(
-                        isError = result.message ?: "An error occur"
-                    )
+            getCurrentWeatherUseCase(coordinates).collect { result ->
+                when (result) {
+                    is Resource.Success -> {
 
-                }
-                is Resource.Loading -> {
-                    _state.value = CurrentWeatherListState(isLoading = true)
+                        _state.value = CurrentWeatherListState(currentWeather = result.data)
 
+                    }
+                    is Resource.Error -> {
+                        _state.value = CurrentWeatherListState(
+                            isError = result.message ?: "An error occur"
+                        )
+
+                    }
+                    is Resource.Loading -> {
+                        _state.value = CurrentWeatherListState(isLoading = true)
+
+                    }
                 }
             }
-        }
+        } catch (e: Exception) {
+            _state.value = CurrentWeatherListState(
+                isLoading = false,
+                currentWeather = null,
+                isError = "error fetching weather"
+            )
+            Log.e("ViewModel", "Error fetching weather: ${e.message}")
+        }*/
     }
 
 

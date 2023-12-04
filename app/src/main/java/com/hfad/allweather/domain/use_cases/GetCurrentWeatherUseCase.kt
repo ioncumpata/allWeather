@@ -11,7 +11,7 @@ import java.io.IOException
 import javax.inject.Inject
 
 class GetCurrentWeatherUseCase @Inject constructor(
-    val weatherRepository: WeatherRepository
+   private val weatherRepository: WeatherRepository
 ) {
 
     operator fun invoke(coordinates: String): Flow<Resource<RealtimeWeather>> = flow {
