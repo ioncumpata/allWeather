@@ -4,15 +4,16 @@ import android.app.Application
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.hfad.allweather.common.Constants
-import com.hfad.allweather.data.location.DefaultLocationTracker
 import com.hfad.allweather.data.remote.WeatherAPI
 import com.hfad.allweather.data.repository.WeatherRepositoryImpl
-import com.hfad.allweather.domain.location.LocationTracker
 import com.hfad.allweather.domain.repository.WeatherRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import okhttp3.Interceptor
+import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import javax.inject.Singleton
@@ -20,6 +21,8 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
+
+
 
     @Provides
     @Singleton
@@ -37,11 +40,6 @@ object AppModule {
         return WeatherRepositoryImpl(api)
     }
 
-    @Provides
-    @Singleton
-    fun provideLocationTracker(defaultLocationTracker: DefaultLocationTracker): LocationTracker {
-        return defaultLocationTracker
-    }
 
     @Provides
     @Singleton
