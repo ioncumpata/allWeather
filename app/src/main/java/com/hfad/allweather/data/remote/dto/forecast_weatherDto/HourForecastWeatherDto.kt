@@ -1,5 +1,7 @@
 package com.hfad.allweather.data.remote.dto.forecast_weatherDto
 
+import com.hfad.allweather.domain.model.forecast_weather.HourForecastWeather
+
 data class HourForecastWeatherDto(
     val chance_of_rain: Int,
     val chance_of_snow: Int,
@@ -35,3 +37,11 @@ data class HourForecastWeatherDto(
     val windchill_c: Double,
     val windchill_f: Double
 )
+
+fun HourForecastWeatherDto.toHourForecastWeather(): HourForecastWeather{
+    return HourForecastWeather(
+        temp_c = temp_c,
+        condition = condition.toConditionForecastWeather(),
+        time = time
+    )
+}

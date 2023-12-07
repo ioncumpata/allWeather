@@ -10,8 +10,8 @@ data class MainForecastWeatherDto(
 
 fun MainForecastWeatherDto.toMainMainForecastWeather(): MainForecastWeather{
     return MainForecastWeather(
-        forecast = forecast,
-        location = location,
-        current = current
+        forecast = forecast.toForecastWeather(),
+        location = location.toLocationForecastWeather(),
+        current = current.toCurrentForecastWeather()
     )
 }

@@ -1,6 +1,7 @@
 package com.hfad.allweather.di
 
 import android.app.Application
+import android.content.Context
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.hfad.allweather.common.Constants
@@ -10,6 +11,7 @@ import com.hfad.allweather.domain.repository.WeatherRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient

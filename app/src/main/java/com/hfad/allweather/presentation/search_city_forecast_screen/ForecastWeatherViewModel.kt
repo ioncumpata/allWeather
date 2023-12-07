@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.hfad.allweather.common.Resource
 import com.hfad.allweather.domain.use_cases.GetForecastWeatherUseCase
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -11,6 +12,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+@HiltViewModel
 class ForecastWeatherViewModel @Inject constructor(
     private val getForecastWeatherUseCase: GetForecastWeatherUseCase
 ) : ViewModel() {

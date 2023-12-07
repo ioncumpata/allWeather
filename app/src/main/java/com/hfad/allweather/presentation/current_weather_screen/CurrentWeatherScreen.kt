@@ -4,36 +4,29 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.location.Location
-import android.net.ConnectivityManager
 import android.os.Bundle
-import android.os.Looper
 import android.provider.Settings
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat.getSystemService
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.location.*
 import com.google.android.gms.tasks.CancellationTokenSource
-import com.google.gson.Gson
-import com.google.gson.GsonBuilder
 import com.hfad.allweather.R
+import com.hfad.allweather.common.Constants
+import com.hfad.allweather.common.DialogManager
 import com.hfad.allweather.common.PermissionUtils
 import com.hfad.allweather.databinding.FragmentCurrentWeatherScreenBinding
 import com.squareup.picasso.Picasso
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
-import okhttp3.logging.HttpLoggingInterceptor
-import javax.inject.Inject
-
-private const val LOCATION_PERMISSION_REQUEST_CODE = 34
 
 @AndroidEntryPoint
 class CurrentWeatherScreen : Fragment() {
@@ -42,58 +35,62 @@ class CurrentWeatherScreen : Fragment() {
     private lateinit var binding: FragmentCurrentWeatherScreenBinding
     private val viewModel: CurrentWeatherViewModel by viewModels()
     private lateinit var fusedLocationClient: FusedLocationProviderClient
-    private var coordinates: String = ""
+    private lateinit var pLauncher: ActivityResultLauncher<String>
+    private val coordinates = MutableLiveData<String>()
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
 
         binding = FragmentCurrentWeatherScreenBinding.inflate(inflater, container, false)
-
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext())
+        checkLocation(requireContext())
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext())
+        coordinates.observe(viewLifecycleOwner) { newLocation ->
+            viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
 
+                if (newLocation.isNullOrEmpty()) {
+                    viewModel.getCurrentWeather(Constants.DEFAULT_LOCATION)
+                } else {
+                    viewModel.getCurrentWeather(newLocation)
+                }
+                viewModel.state.collectLatest { value ->
 
-        CoroutineScope(Dispatchers.IO).launch {
-            while (coordinates.isEmpty() || !isNetworkAvailable()) {
-                delay(100) // Adjust the delay as needed
-            }
+                    withContext(Dispatchers.Main) {
 
-            viewModel.getCurrentWeather(coordinates)
+                        if (value.isLoading) {
 
-            viewModel.state.collectLatest { value ->
-
-                withContext(Dispatchers.Main) {
-
-                    if (value.isLoading) {
-
-                    } else {
-                        if (value.isError.isNotBlank()) {
-                            Toast.makeText(requireContext(), value.isError, Toast.LENGTH_LONG)
-                                .show()
-                            Log.d("Http", value.isError)
+                            binding.progressBar.visibility = View.VISIBLE
 
                         } else {
+                            if (value.isError.isNotBlank()) {
+                                Toast.makeText(requireContext(), value.isError, Toast.LENGTH_LONG)
+                                    .show()
 
-                            updateCurrentView(value)
+                            } else {
+                                binding.progressBar.visibility = View.GONE
+                                updateCurrentView(value)
+                            }
+
+
                         }
-
-
                     }
                 }
+
             }
 
+
         }
-
-
     }
 
 
+    @SuppressLint("StringFormatInvalid", "StringFormatMatches")
     private fun updateCurrentView(value: CurrentWeatherListState) =
 
         with(binding) {
@@ -121,96 +118,56 @@ class CurrentWeatherScreen : Fragment() {
                     R.string.humidity_format,
                     value.currentWeather?.current?.humidity.toString()
                 )
+            tvHourDate.text = value.currentWeather?.location?.localtime.toString()
+
+            btUpdate.setOnClickListener {
+                checkLocation(requireContext())
+            }
 
         }
 
-
-    override fun onStart() {
-        super.onStart()
-        when {
-            PermissionUtils.isAccessFineLocationGranted(requireContext()) -> {
-                when {
-                    PermissionUtils.isLocationEnabled(requireContext()) -> {
-                        if (isNetworkAvailable())
-                            setUpLocationListener()
-                    }
-                }
-            }
-            else -> {
-                PermissionUtils.requestAccessFineLocationPermission(
-                    requireActivity() as AppCompatActivity,
-                    LOCATION_PERMISSION_REQUEST_CODE
-                )
-            }
-        }
+    override fun onResume() {
+        super.onResume()
+        checkLocation(requireContext())
     }
 
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        when (requestCode) {
-            LOCATION_PERMISSION_REQUEST_CODE -> {
-                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    when {
-                        PermissionUtils.isLocationEnabled(requireContext()) -> {
-                            setUpLocationListener()
-                        }
-                    }
-                } else {
-                    Toast.makeText(
-                        requireContext(),
-                        "Permission not granted",
-                        Toast.LENGTH_LONG
-                    ).show()
+
+    private fun checkLocation(context: Context) {
+        if (PermissionUtils.isLocationEnabled(context)) {
+            getLocation(context)
+        } else {
+            DialogManager.locationSettingsDialog(context, object : DialogManager.Listener {
+                override fun onClick() {
+                    startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
                 }
-            }
+            })
         }
+
     }
 
     @SuppressLint("MissingPermission")
-    private fun setUpLocationListener() {
+    private fun getLocation(context: Context) {
         val ct = CancellationTokenSource()
-        fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, ct.token)
-            .addOnCompleteListener {
-                coordinates = "${it.result.latitude},${it.result.longitude}"
-                Log.d("Coordinates", coordinates)
+        if (!PermissionUtils.isAccessFineLocationGranted(context)) {
 
+            pLauncher = registerForActivityResult(
+                ActivityResultContracts.RequestPermission()
+            ) {
+                Toast.makeText(context, "Permission is $it", Toast.LENGTH_LONG).show()
             }
-        // for getting the current location update after every 2 seconds with high accuracy
-        /* val locationRequest = LocationRequest().setInterval(2000).setFastestInterval(2000)
-             .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
-         fusedLocationClient.requestLocationUpdates(
-             locationRequest,
-             object : LocationCallback() {
-                 override fun onLocationResult(locationResult: LocationResult) {
-                     super.onLocationResult(locationResult)
-                     currentLocation = locationResult.lastLocation
 
-                     var lat = currentLocation!!.latitude
-                     var long = currentLocation!!.longitude
+            pLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+        } else {
 
-                     coordinates = "$lat,$long"
 
-                     Log.d("Coordinates", coordinates)
+            fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, ct.token)
+                .addOnCompleteListener {
+                    coordinates.value = "${it.result.latitude},${it.result.longitude}"
 
-                 }
-             },
-             Looper.myLooper()!!
-         )*/
+
+                }
+        }
     }
 
-    private fun isNetworkAvailable(): Boolean {
-        val connectivityManager =
-            requireContext().getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        val activeNetworkInfo = connectivityManager.activeNetworkInfo
-        return activeNetworkInfo != null && activeNetworkInfo.isConnected
-    }
 
-    companion object {
-        @JvmStatic
-        fun newInstance() = CurrentWeatherScreen()
-    }
 }

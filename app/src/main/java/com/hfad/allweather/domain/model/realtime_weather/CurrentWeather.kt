@@ -4,6 +4,6 @@ data class CurrentWeather(
     val condition: ConditionWeather,
     val feelslike_c: Double,
     val humidity: Int,
-    val temp_c: Int,
+    val temp_c: Double,
     val wind_kph: Double
     )

@@ -21,13 +21,13 @@ data class DayForecastWeatherDto(
     val mintemp_f: Double,
     val totalprecip_in: Double,
     val totalprecip_mm: Double,
-    val totalsnow_cm: Int,
+    val totalsnow_cm: Double,
     val uv: Int
 )
 
 fun DayForecastWeatherDto.toDayForecastWeather(): DayForecastWeather {
     return DayForecastWeather(
         condition = condition.toConditionForecastWeather(),
-        maxtemp_c = maxtemp_c,
+        averageTemp = avgtemp_c,
     )
 }

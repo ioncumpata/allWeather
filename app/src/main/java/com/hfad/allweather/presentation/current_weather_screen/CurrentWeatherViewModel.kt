@@ -54,7 +54,6 @@ class CurrentWeatherViewModel @Inject constructor(
                 currentWeather = null,
                 isError = "error fetching weather"
             )
-            Log.e("ViewModel", "Error fetching weather: ${e.message}")
         }
     }
 

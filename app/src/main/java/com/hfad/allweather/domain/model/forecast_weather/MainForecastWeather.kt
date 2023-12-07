@@ -5,7 +5,7 @@ import com.hfad.allweather.data.remote.dto.forecast_weatherDto.ForecastWeatherDt
 import com.hfad.allweather.data.remote.dto.forecast_weatherDto.LocationForecastWeatherDto
 
 data class MainForecastWeather(
-    val current: CurrentForecastWeatherDto,
-    val forecast: ForecastWeatherDto,
-    val location: LocationForecastWeatherDto
+    val current: CurrentForecastWeather,
+    val forecast: ForecastWeather,
+    val location: LocationForecastWeather
 )

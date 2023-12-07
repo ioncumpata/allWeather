@@ -9,17 +9,8 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 
 object PermissionUtils {
-    fun requestAccessFineLocationPermission(activity: AppCompatActivity, requestId: Int) {
-        ActivityCompat.requestPermissions(
-            activity,
-            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-            requestId
-        )
-    }
 
-    /**
-     * Function to check if the location permissions are granted or not
-     */
+
     fun isAccessFineLocationGranted(context: Context): Boolean {
         return ContextCompat
             .checkSelfPermission(
@@ -28,9 +19,6 @@ object PermissionUtils {
             ) == PackageManager.PERMISSION_GRANTED
     }
 
-    /**
-     * Function to check if location of the device is enabled or not
-     */
     fun isLocationEnabled(context: Context): Boolean {
         val locationManager: LocationManager =
             context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
@@ -38,5 +26,4 @@ object PermissionUtils {
                 || locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
     }
 
-    const val DEFAULT_LOCATION = "53.1%2C-0.13"
 }

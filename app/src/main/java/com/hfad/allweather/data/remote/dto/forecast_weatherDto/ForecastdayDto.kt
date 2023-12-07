@@ -14,6 +14,6 @@ fun ForecastdayDto.toForecastday(): Forecastday {
     return Forecastday(
         date = date,
         day = day.toDayForecastWeather(),
-
+         hour = hour.map { it.toHourForecastWeather() }
     )
 }
