@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -38,14 +39,17 @@ class CurrentWeatherScreen : Fragment() {
     private lateinit var pLauncher: ActivityResultLauncher<String>
     private val coordinates = MutableLiveData<String>()
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext())
+        checkLocation(requireContext())
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-
         binding = FragmentCurrentWeatherScreenBinding.inflate(inflater, container, false)
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext())
-        checkLocation(requireContext())
         return binding.root
     }
 
@@ -163,8 +167,6 @@ class CurrentWeatherScreen : Fragment() {
             fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, ct.token)
                 .addOnCompleteListener {
                     coordinates.value = "${it.result.latitude},${it.result.longitude}"
-
-
                 }
         }
     }

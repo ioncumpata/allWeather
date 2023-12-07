@@ -52,7 +52,7 @@ class CurrentWeatherViewModel @Inject constructor(
             _state.value = CurrentWeatherListState(
                 isLoading = false,
                 currentWeather = null,
-                isError = "error fetching weather"
+                isError = "Error fetching weather"
             )
         }
     }
