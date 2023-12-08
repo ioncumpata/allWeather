@@ -1,5 +1,5 @@
 ## **Screenshots**
-<img src="https://i.imgur.com/DwfZ4zf.png" width="300"> <img src="https://i.imgur.com/3Dtk4wO.png" width="300"> 
+<img src="https://i.imgur.com/DwfZ4zf.png" width="300"> <img src="https://i.imgur.com/xTOYH6R.png" width="300"> 
 
 ## Description
 
